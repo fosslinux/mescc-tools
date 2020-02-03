@@ -15,21 +15,25 @@
  * along with M2-Planet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define FALSE 0
-// CONSTANT FALSE 0
-#define TRUE 1
-// CONSTANT TRUE 1
+// CONSTANT NULL 0
 
-int match(char* a, char* b)
+void* malloc(int size)
 {
-	int i = -1;
-	do
-	{
-		i = i + 1;
-		if(a[i] != b[i])
-		{
-			return FALSE;
-		}
-	} while((0 != a[i]) && (0 !=b[i]));
-	return TRUE;
+	asm("LOAD_ESP_IMMEDIATE_into_eax %4"
+	"PUSH_eax"
+	"LOAD_IMMEDIATE_eax %45"
+	"LOAD_IMMEDIATE_ebx %0"
+	"INT_80"
+	"POP_ebx"
+	"ADD_eax_to_ebx"
+	"PUSH_eax"
+	"PUSH_ebx"
+	"LOAD_IMMEDIATE_eax %45"
+	"INT_80"
+	"POP_ebx"
+	"CMP"
+	"POP_eax"
+	"JUMP_EQ8 !FUNCTION_malloc_Done"
+	"LOAD_IMMEDIATE_eax %-1"
+	":FUNCTION_malloc_Done");
 }

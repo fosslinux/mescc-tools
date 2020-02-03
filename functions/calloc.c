@@ -14,22 +14,22 @@
  * You should have received a copy of the GNU General Public License
  * along with M2-Planet.  If not, see <http://www.gnu.org/licenses/>.
  */
+// void* malloc(int size);
 
-#define FALSE 0
-// CONSTANT FALSE 0
-#define TRUE 1
-// CONSTANT TRUE 1
-
-int match(char* a, char* b)
+void* memset(void* ptr, int value, int num)
 {
-	int i = -1;
-	do
+	char* s;
+	for(s = ptr; 0 < num; num = num - 1)
 	{
-		i = i + 1;
-		if(a[i] != b[i])
-		{
-			return FALSE;
-		}
-	} while((0 != a[i]) && (0 !=b[i]));
-	return TRUE;
+		s[0] = value;
+		s = s + 1;
+	}
+}
+
+void* calloc(int count, int size)
+{
+	void* ret = malloc(count * size);
+	if(NULL == ret) return NULL;
+	memset(ret, 0, (count * size));
+	return ret;
 }

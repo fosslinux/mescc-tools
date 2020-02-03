@@ -15,21 +15,28 @@
  * along with M2-Planet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define FALSE 0
-// CONSTANT FALSE 0
-#define TRUE 1
-// CONSTANT TRUE 1
-
-int match(char* a, char* b)
+int waitpid (int pid, int* status_ptr, int options)
 {
-	int i = -1;
-	do
-	{
-		i = i + 1;
-		if(a[i] != b[i])
-		{
-			return FALSE;
-		}
-	} while((0 != a[i]) && (0 !=b[i]));
-	return TRUE;
+	/* Uses wait4 with struct rusage *ru set to NULL */
+	asm("LOAD_EFFECTIVE_ADDRESS_rdi %24"
+	"LOAD_INTEGER_rdi"
+	"LOAD_EFFECTIVE_ADDRESS_rsi %16"
+	"LOAD_INTEGER_rsi"
+	"LOAD_EFFECTIVE_ADDRESS_rdx %8"
+	"LOAD_INTEGER_rdx"
+	"LOAD_IMMEDIATE_r10 %0"
+	"LOAD_IMMEDIATE_rax %61"
+	"SYSCALL");
+}
+
+int execve(char* file_name, char** argv, char** envp)
+{
+	asm("LOAD_EFFECTIVE_ADDRESS_rdi %24"
+	"LOAD_INTEGER_rdi"
+	"LOAD_EFFECTIVE_ADDRESS_rsi %16"
+	"LOAD_INTEGER_rsi"
+	"LOAD_EFFECTIVE_ADDRESS_rdx %8"
+	"LOAD_INTEGER_rdx"
+	"LOAD_IMMEDIATE_rax %59"
+	"SYSCALL");
 }

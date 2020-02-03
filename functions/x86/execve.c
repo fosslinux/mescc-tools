@@ -15,21 +15,26 @@
  * along with M2-Planet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define FALSE 0
-// CONSTANT FALSE 0
-#define TRUE 1
-// CONSTANT TRUE 1
-
-int match(char* a, char* b)
+int waitpid (int pid, int* status_ptr, int options)
 {
-	int i = -1;
-	do
-	{
-		i = i + 1;
-		if(a[i] != b[i])
-		{
-			return FALSE;
-		}
-	} while((0 != a[i]) && (0 !=b[i]));
-	return TRUE;
+	asm("LOAD_EFFECTIVE_ADDRESS_ebx %12"
+	"LOAD_INTEGER_ebx"
+	"LOAD_EFFECTIVE_ADDRESS_ecx %8"
+	"LOAD_INTEGER_ecx"
+	"LOAD_EFFECTIVE_ADDRESS_edx %4"
+	"LOAD_INTEGER_edx"
+	"LOAD_IMMEDIATE_eax %7"
+	"INT_80");
+}
+
+int execve(char* file_name, char** argv, char** envp)
+{
+	asm("LOAD_EFFECTIVE_ADDRESS_ebx %12"
+	"LOAD_INTEGER_ebx"
+	"LOAD_EFFECTIVE_ADDRESS_ecx %8"
+	"LOAD_INTEGER_ecx"
+	"LOAD_EFFECTIVE_ADDRESS_edx %4"
+	"LOAD_INTEGER_edx"
+	"LOAD_IMMEDIATE_eax %11"
+	"INT_80");
 }

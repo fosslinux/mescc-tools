@@ -15,21 +15,13 @@
  * along with M2-Planet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define FALSE 0
-// CONSTANT FALSE 0
-#define TRUE 1
-// CONSTANT TRUE 1
+// CONSTANT EXIT_FAILURE 1
+// CONSTANT EXIT_SUCCESS 0
 
-int match(char* a, char* b)
+void exit(int value)
 {
-	int i = -1;
-	do
-	{
-		i = i + 1;
-		if(a[i] != b[i])
-		{
-			return FALSE;
-		}
-	} while((0 != a[i]) && (0 !=b[i]));
-	return TRUE;
+	asm("POP_ebx"
+	"POP_ebx"
+	"LOAD_IMMEDIATE_eax %1"
+	"INT_80");
 }

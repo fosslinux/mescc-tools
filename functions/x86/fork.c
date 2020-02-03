@@ -15,21 +15,9 @@
  * along with M2-Planet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define FALSE 0
-// CONSTANT FALSE 0
-#define TRUE 1
-// CONSTANT TRUE 1
-
-int match(char* a, char* b)
+int fork()
 {
-	int i = -1;
-	do
-	{
-		i = i + 1;
-		if(a[i] != b[i])
-		{
-			return FALSE;
-		}
-	} while((0 != a[i]) && (0 !=b[i]));
-	return TRUE;
+	asm("LOAD_IMMEDIATE_eax %2"
+	"LOAD_IMMEDIATE_ebx %0"
+	"INT_80");
 }

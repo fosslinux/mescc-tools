@@ -29,15 +29,8 @@
 #define max_args 256
 //CONSTANT max_args 256
 
-char* numerate_number(int a);
-int match(char* a, char* b);
-void file_print(char* s, FILE* f);
-
 char** tokens;
 int command_done;
-int VERBOSE;
-int STRICT;
-int envp_length;
 
 /* Function for purging line comments */
 void collect_comment(FILE* input)
@@ -121,171 +114,17 @@ char* collect_token(FILE* input)
 
 	if(1 == i)
 	{ /* Nothing worth returning */
-		free(token);
 		return NULL;
 	}
 	return token;
 }
 
-char* copy_string(char* target, char* source)
-{
-	while(0 != source[0])
-	{
-		target[0] = source[0];
-		target = target + 1;
-		source = source + 1;
-	}
-	return target;
-}
-
-int string_length(char* a)
-{
-	int i = 0;
-	while(0 != a[i]) i = i + 1;
-	return i;
-}
-
-char* prepend_string(char* add, char* base)
-{
-	char* ret = calloc(max_string, sizeof(char));
-	copy_string(copy_string(ret, add), base);
-	return ret;
-}
-
-char* find_char(char* string, char a)
-{
-	if(0 == string[0]) return NULL;
-	while(a != string[0])
-	{
-		string = string + 1;
-		if(0 == string[0]) return string;
-	}
-	return string;
-}
-
-char* prematch(char* search, char* field)
-{
-	do
-	{
-		if(search[0] != field[0]) return NULL;
-		search = search + 1;
-		field = field + 1;
-	} while(0 != search[0]);
-	return field;
-}
-
-char* env_lookup(char* token, char** envp)
-{
-	if(NULL == envp) return NULL;
-	int i = 0;
-	char* ret = NULL;
-	do
-	{
-		ret = prematch(token, envp[i]);
-		if(NULL != ret) return ret;
-		i = i + 1;
-	} while(NULL != envp[i]);
-	return NULL;
-}
-
-char* find_executable(char* name, char* PATH)
-{
-	if(('.' == name[0]) || ('/' == name[0]))
-	{ /* assume names that start with . or / are relative or absolute */
-		return name;
-	}
-
-	char* next = find_char(PATH, ':');
-	char* trial;
-	FILE* t;
-	while(NULL != next)
-	{
-		next[0] = 0;
-		trial = prepend_string(PATH, prepend_string("/", name));
-
-		t = fopen(trial, "r");
-		if(NULL != t)
-		{
-			fclose(t);
-			return trial;
-		}
-		PATH = next + 1;
-		next = find_char(PATH, ':');
-		free(trial);
-	}
-	return NULL;
-}
-
-/* Function to check if the token is an envar and if it is get the pos of = */
-int check_envar(char* token)
-{
-	int j;
-	int equal_found;
-	equal_found = 0;
-	for(j = 0; j < string_length(token); j = j + 1)
-	{
-		if(token[j] == '=')
-		{ /* After = can be anything */
-			equal_found = 1;
-			break;
-		}
-		else
-		{ /* Should be A-z */
-			int found;
-			found = 0;
-			char c;
-			/* Represented numerically; 0 = 48 through 9 = 57 */
-			for(c = 48; c <= 57; c = c + 1)
-			{
-				if(token[j] == c)
-				{
-					found = 1;
-				}
-			}
-			/* Represented numerically; A = 65 through z = 122 */
-			for(c = 65; c <= 122; c = c + 1)
-			{
-				if(token[j] == c)
-				{
-					found = 1;
-				}
-			}
-			if(found == 0)
-			{ /* In all likelihood this isn't actually an environment variable */
-				return 1;
-			}
-		}
-	}
-	if(equal_found == 0)
-	{ /* Not an envar */
-		return 1;
-	}
-	return 0;
-}
-
 /* Function for executing our programs with desired arguments */
-void execute_commands(FILE* script, char** envp, int envp_length)
+void execute_commands(FILE* script, char** envp)
 {
 	while(1)
 	{
 		tokens = calloc(max_args, sizeof(char*));
-		char* PATH = env_lookup("PATH=", envp);
-		if(NULL != PATH)
-		{
-			PATH = calloc(max_string, sizeof(char));
-			copy_string(PATH, env_lookup("PATH=", envp));
-		}
-
-		char* USERNAME = env_lookup("LOGNAME=", envp);
-		if((NULL == PATH) && (NULL == USERNAME))
-		{
-			PATH = calloc(max_string, sizeof(char));
-			copy_string(PATH, "/root/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin");
-		}
-		else if(NULL == PATH)
-		{
-			PATH = prepend_string("/home/", prepend_string(USERNAME,"/bin:/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games"));
-		}
 
 		int i = 0;
 		int status = 0;
@@ -300,7 +139,7 @@ void execute_commands(FILE* script, char** envp, int envp_length)
 			}
 		} while(0 == command_done);
 
-		if(VERBOSE && (0 < i))
+		if(0 < i)
 		{
 			file_print(" +> ", stdout);
 			int j;
@@ -314,52 +153,38 @@ void execute_commands(FILE* script, char** envp, int envp_length)
 
 		if(0 < i)
 		{ /* Not a line comment */
-			int is_envar;
-			is_envar = 0;
-			if(check_envar(tokens[0]) == 0)
-			{ /* It's an envar! */
-				is_envar = 1;
-				envp[envp_length] = tokens[0]; /* Since arrays are 0 indexed */
-				envp_length = envp_length + 1;
+			char* program = tokens[0];
+			if(NULL == program)
+			{
+				file_print(tokens[0], stderr);
+				file_print("Some weird shit went down with: ", stderr);
+				file_print("\n", stderr);
+				exit(EXIT_FAILURE);
 			}
 
-			if(is_envar == 0)
-			{ /* Stuff to exec */
-				char* program = find_executable(tokens[0], PATH);
-				if(NULL == program)
-				{
-					file_print(tokens[0], stderr);
-					file_print("Some weird shit went down with: ", stderr);
-					file_print("\n", stderr);
-					exit(EXIT_FAILURE);
-				}
+			int f = fork();
+			if (f == -1)
+			{
+				file_print("fork() failure", stderr);
+				exit(EXIT_FAILURE);
+			}
+			else if (f == 0)
+			{ /* child */
+				/* execve() returns only on error */
+				execve(program, tokens, envp);
+				/* Prevent infinite loops */
+				exit(EXIT_SUCCESS);
+			}
 
-				int f = fork();
-				if (f == -1)
-				{
-					file_print("fork() failure", stderr);
-					exit(EXIT_FAILURE);
-				}
-				else if (f == 0)
-				{ /* child */
-					/* execve() returns only on error */
-					execve(program, tokens, envp);
-					/* Prevent infinite loops */
-					_exit(EXIT_SUCCESS);
-				}
+			/* Otherwise we are the parent */
+			/* And we should wait for it to complete */
+			waitpid(f, &status, 0);
 
-				/* Otherwise we are the parent */
-				/* And we should wait for it to complete */
-				waitpid(f, &status, 0);
-
-				if(STRICT && (0 != status))
-				{ /* Clearly the script hit an issue that should never have happened */
-					file_print("Subprocess error ", stderr);
-					file_print(numerate_number(status), stderr);
-					file_print("\nABORTING HARD\n", stderr);
-					/* stop to prevent damage */
-					exit(EXIT_FAILURE);
-				}
+			if(0 != status)
+			{ /* Clearly the script hit an issue that should never have happened */
+				file_print("Subprocess error\nABORTING HARD\n", stderr);
+				/* stop to prevent damage */
+				exit(EXIT_FAILURE);
 			}
 			/* Then go again */
 		}
@@ -369,66 +194,20 @@ void execute_commands(FILE* script, char** envp, int envp_length)
 
 int main(int argc, char** argv, char** envp)
 {
-	VERBOSE = FALSE;
-	STRICT = FALSE;
 	char* filename = "kaem.run";
 	FILE* script = NULL;
 
-	/* Get envp_length */
-	envp_length = 1;
-	while(envp[envp_length] != NULL)
-	{
-		envp_length = envp_length + 1;
-	}
-	char** nenvp = calloc(envp_length + max_args, sizeof(char*));
-	int i;
-	for(i = 0; i < envp_length; i = i + 1)
-	{
-		nenvp[i] = envp[i];
-	}
-
-	for(i = envp_length; i < (envp_length + max_args); i = i + 1)
-	{
-		nenvp[i] = "";
-	}
-
-	i = 1;
+	int i = 1;
 	while(i <= argc)
 	{
 		if(NULL == argv[i])
 		{
 			i = i + 1;
 		}
-		else if(match(argv[i], "-h") || match(argv[i], "--help"))
-		{
-			file_print("kaem only accepts --help, --version, --file, --verbose, --nightmare-mode or no arguments\n", stdout);
-			exit(EXIT_SUCCESS);
-		}
 		else if(match(argv[i], "-f") || match(argv[i], "--file"))
 		{
 			filename = argv[i + 1];
 			i = i + 2;
-		}
-		else if(match(argv[i], "n") || match(argv[i], "--nightmare-mode"))
-		{
-			file_print("Begin nightmare", stdout);
-			envp = NULL;
-			i = i + 1;
-		}
-		else if(match(argv[i], "-V") || match(argv[i], "--version"))
-		{
-			file_print("kaem version 0.6.0\n", stdout);
-			exit(EXIT_SUCCESS);
-		}
-		else if(match(argv[i], "--verbose"))
-		{
-			VERBOSE = TRUE;
-			i = i + 1;
-		}
-		else if(match(argv[i], "--strict"))
-		{
-			STRICT = TRUE;
-			i = i + 1;
 		}
 		else
 		{
@@ -447,7 +226,6 @@ int main(int argc, char** argv, char** envp)
 		exit(EXIT_FAILURE);
 	}
 
-	execute_commands(script, nenvp, envp_length);
-	fclose(script);
+	execute_commands(script, envp);
 	return EXIT_SUCCESS;
 }
