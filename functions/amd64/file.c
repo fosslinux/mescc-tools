@@ -37,16 +37,6 @@ int fgetc(FILE* f)
 	":FUNCTION_fgetc_Done");
 }
 
-void fputc(char s, FILE* f)
-{
-	asm("LOAD_IMMEDIATE_rax %1"
-	"LOAD_EFFECTIVE_ADDRESS_rdi %8"
-	"LOAD_INTEGER_rdi"
-	"LOAD_EFFECTIVE_ADDRESS_rsi %16"
-	"LOAD_IMMEDIATE_rdx %1"
-	"SYSCALL");
-}
-
 /* Important values needed for open
  * O_RDONLY => 0
  * O_WRONLY => 1

@@ -41,7 +41,6 @@ void collect_comment(FILE* input)
 		c = fgetc(input);
 		if(-1 == c)
 		{
-			file_print("IMPROPERLY TERMINATED LINE COMMENT!\nABORTING HARD\n", stderr);
 			exit(EXIT_FAILURE);
 		}
 	} while('\n' != c);
@@ -56,7 +55,6 @@ int collect_string(FILE* input, int index, char* target)
 		c = fgetc(input);
 		if(-1 == c)
 		{ /* We never should hit EOF while collecting a RAW string */
-			file_print("IMPROPERLY TERMINATED RAW string!\nABORTING HARD\n", stderr);
 			exit(EXIT_FAILURE);
 		}
 		else if('"' == c)
@@ -80,7 +78,6 @@ char* collect_token(FILE* input)
 		c = fgetc(input);
 		if(-1 == c)
 		{ /* Deal with end of file */
-			file_print("execution complete\n", stderr);
 			exit(EXIT_SUCCESS);
 		}
 		else if((' ' == c) || ('\t' == c))
@@ -140,32 +137,16 @@ void execute_commands(FILE* script, char** envp)
 		} while(0 == command_done);
 
 		if(0 < i)
-		{
-			file_print(" +> ", stdout);
-			int j;
-			for(j = 0; j < i; j = j + 1)
-			{
-				file_print(tokens[j], stdout);
-				fputc(' ', stdout);
-			}
-			file_print("\n", stdout);
-		}
-
-		if(0 < i)
 		{ /* Not a line comment */
 			char* program = tokens[0];
 			if(NULL == program)
 			{
-				file_print(tokens[0], stderr);
-				file_print("Some weird shit went down with: ", stderr);
-				file_print("\n", stderr);
 				exit(EXIT_FAILURE);
 			}
 
 			int f = fork();
 			if (f == -1)
 			{
-				file_print("fork() failure", stderr);
 				exit(EXIT_FAILURE);
 			}
 			else if (f == 0)
@@ -182,7 +163,6 @@ void execute_commands(FILE* script, char** envp)
 
 			if(0 != status)
 			{ /* Clearly the script hit an issue that should never have happened */
-				file_print("Subprocess error\nABORTING HARD\n", stderr);
 				/* stop to prevent damage */
 				exit(EXIT_FAILURE);
 			}
@@ -194,36 +174,20 @@ void execute_commands(FILE* script, char** envp)
 
 int main(int argc, char** argv, char** envp)
 {
-	char* filename = "kaem.run";
+	char* filename = calloc(max_string, sizeof(char));
+	filename = "kaem.run";
 	FILE* script = NULL;
-
-	int i = 1;
-	while(i <= argc)
-	{
-		if(NULL == argv[i])
-		{
-			i = i + 1;
-		}
-		else if(match(argv[i], "-f") || match(argv[i], "--file"))
-		{
-			filename = argv[i + 1];
-			i = i + 2;
-		}
-		else
-		{
-			file_print("UNKNOWN ARGUMENT\n", stdout);
-			exit(EXIT_FAILURE);
-		}
-	}
 
 	script = fopen(filename, "r");
 
 	if(NULL == script)
 	{
-		file_print("The file: ", stderr);
-		file_print(filename, stderr);
-		file_print(" can not be opened!\n", stderr);
-		exit(EXIT_FAILURE);
+		char* filename = argv[1];
+		script = fopen(filename, "r");
+		if(NULL == script)
+		{
+			exit(EXIT_FAILURE);
+		}
 	}
 
 	execute_commands(script, envp);
