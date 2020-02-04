@@ -24,6 +24,14 @@
 //CONSTANT FALSE 0
 #define TRUE 1
 //CONSTANT TRUE 1
+#define COLLECT_STRING_FAIL 2
+//CONSTANT COLLECT_STRING_FAIL 2
+#define COLLECT_COMMENT_FAIL 3
+//CONSTANT COLLECT_COMMENT_FAIL 3
+#define FORK_FAIL 4
+//CONSTANT FORK_FAIL 4
+#define OPEN_FILE_FAIL 5
+//CONSTANT OPEN_FILE_FAIL 5
 #define max_string 4096
 //CONSTANT max_string 4096
 #define max_args 256
@@ -41,7 +49,7 @@ void collect_comment(FILE* input)
 		c = fgetc(input);
 		if(-1 == c)
 		{
-			exit(EXIT_FAILURE);
+			exit(COLLECT_COMMENT_FAIL);
 		}
 	} while('\n' != c);
 }
@@ -55,7 +63,7 @@ int collect_string(FILE* input, int index, char* target)
 		c = fgetc(input);
 		if(-1 == c)
 		{ /* We never should hit EOF while collecting a RAW string */
-			exit(EXIT_FAILURE);
+			exit(COLLECT_STRING_FAIL);
 		}
 		else if('"' == c)
 		{ /* Made it to the end */
@@ -139,15 +147,11 @@ void execute_commands(FILE* script, char** envp)
 		if(0 < i)
 		{ /* Not a line comment */
 			char* program = tokens[0];
-			if(NULL == program)
-			{
-				exit(EXIT_FAILURE);
-			}
 
 			int f = fork();
 			if (f == -1)
 			{
-				exit(EXIT_FAILURE);
+				exit(FORK_FAIL);
 			}
 			else if (f == 0)
 			{ /* child */
@@ -164,7 +168,7 @@ void execute_commands(FILE* script, char** envp)
 			if(0 != status)
 			{ /* Clearly the script hit an issue that should never have happened */
 				/* stop to prevent damage */
-				exit(EXIT_FAILURE);
+				exit(status + 10);
 			}
 			/* Then go again */
 		}
@@ -186,7 +190,7 @@ int main(int argc, char** argv, char** envp)
 		script = fopen(filename, "r");
 		if(NULL == script)
 		{
-			exit(EXIT_FAILURE);
+			exit(OPEN_FILE_FAIL);
 		}
 	}
 
