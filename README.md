@@ -14,6 +14,8 @@
 ## You should have received a copy of the GNU General Public License
 ## along with mescc-tools.  If not, see <http://www.gnu.org/licenses/>.
 
+This is the minimal version of kaem. This is not ready for use; use minimal-debug.
+
 The master repository for this work is located at:
 https://savannah.nongnu.org/projects/mescc-tools
 
