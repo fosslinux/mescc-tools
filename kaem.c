@@ -119,9 +119,27 @@ char* collect_token(FILE* input)
 	return token;
 }
 
-/* Function for executing our programs with desired arguments */
-void execute_commands(FILE* script, char** envp)
+int main(int argc, char** argv, char** envp)
 {
+	char* filename = "kaem.run";
+	FILE* script = NULL;
+
+	int i = 1;
+	if(NULL != argv[1])
+	{
+		filename = argv[1];
+	}
+
+	script = fopen(filename, "r");
+
+	if(NULL == script)
+	{
+		file_print("The file: ", stderr);
+		file_print(filename, stderr);
+		file_print(" can not be opened!\n", stderr);
+		exit(EXIT_FAILURE);
+	}
+
 	while(1)
 	{
 		tokens = calloc(max_args, sizeof(char*));
@@ -189,43 +207,6 @@ void execute_commands(FILE* script, char** envp)
 			/* Then go again */
 		}
 	}
-}
 
-
-int main(int argc, char** argv, char** envp)
-{
-	char* filename = "kaem.run";
-	FILE* script = NULL;
-
-	int i = 1;
-	while(i <= argc)
-	{
-		if(NULL == argv[i])
-		{
-			i = i + 1;
-		}
-		else if(match(argv[i], "-f") || match(argv[i], "--file"))
-		{
-			filename = argv[i + 1];
-			i = i + 2;
-		}
-		else
-		{
-			file_print("UNKNOWN ARGUMENT\n", stdout);
-			exit(EXIT_FAILURE);
-		}
-	}
-
-	script = fopen(filename, "r");
-
-	if(NULL == script)
-	{
-		file_print("The file: ", stderr);
-		file_print(filename, stderr);
-		file_print(" can not be opened!\n", stderr);
-		exit(EXIT_FAILURE);
-	}
-
-	execute_commands(script, envp);
 	return EXIT_SUCCESS;
 }
